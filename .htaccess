@@ -1,0 +1,27 @@
+# Ativar reescrita de URL
+RewriteEngine On
+
+# Permitir acesso a arquivos e diretórios reais
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Redirecionar para index.html
+RewriteRule ^(.*)$ index.html [QSA,L]
+
+# Adicionar headers de segurança
+<IfModule mod_headers.c>
+    # Permitir CORS
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    
+    # Prevenir clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevenir MIME sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Ativar XSS Protection
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>

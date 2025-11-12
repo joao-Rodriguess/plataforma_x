@@ -1,0 +1,31 @@
+🔴 ERRO ENCONTRADO E SOLUÇÃO
+═════════════════════════════════════════════════════════════════════
+
+📋 ERRO QUE VOCÊ RECEBEU:
+  "Erro ao conectar com a API: Unexpected token '<', "<br /> <b>"..."
+
+🔍 CAUSA REAL:
+  Usuário plat_d5b0c439 não foi criado no MySQL
+  │
+  └─ Você executou: api/setup.php ✓
+     (criou api/config.php com credenciais)
+  
+  └─ MAS NÃO executou: api/create_user.php ✗
+     (não criou o usuário no MySQL)
+
+═════════════════════════════════════════════════════════════════════
+🚀 SOLUÇÃO RÁPIDA (Copie e cole no PowerShell Admin)
+═════════════════════════════════════════════════════════════════════
+
+cd C:\xampp\htdocs\plataforma_x
+c:\xampp\php\php.exe api/create_user.php
+c:\xampp\php\php.exe install_database.php
+c:\xampp\php\php.exe api/test_connection.php
+
+(Deixe tudo em branco quando pedir credencial root, apenas pressione ENTER)
+
+Depois acesse: http://localhost/plataforma_x
+
+═════════════════════════════════════════════════════════════════════
+✅ Pronto! O erro está resolvido!
+═════════════════════════════════════════════════════════════════════

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Automático - Plataforma X</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .step {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .step h2 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .step p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .credentials-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .credentials-box strong {
+            color: #667eea;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 3px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .step.completed .progress-fill {
+            width: 100%;
+        }
+
+        .disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        ul {
+            margin-left: 20px;
+            color: #555;
+            font-size: 13px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Setup Automático</h1>
+        <p class="subtitle">Plataforma X - Configuração do Banco de Dados</p>
+
+        <!-- Passo 1: Setup -->
+        <div class="step" id="step1">
+            <h2>
+                <span class="step-number">1</span>
+                Gerar Credenciais
+            </h2>
+            <p>Gera automaticamente usuário e senha do banco de dados MySQL.</p>
+            <div class="info-box">
+                ℹ️ Este passo cria o arquivo <strong>api/config.php</strong> com credenciais seguras geradas aleatoriamente.
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="executeStep1()">Executar Passo 1</button>
+            </div>
+            <div id="status1" class="status"></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress1"></div>
+            </div>
+        </div>
+
+        <!-- Passo 2: Create User -->
+        <div class="step" id="step2">
+            <h2>
+                <span class="step-number">2</span>
+                Criar Usuário no MySQL
+            </h2>
+            <p>Cria o usuário no banco de dados MySQL com as credenciais geradas.</p>
+            <div class="info-box">
+                ℹ️ Você precisará fornecer as credenciais ROOT do MySQL para este passo.
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">
+                    Usuário ROOT MySQL:
+                </label>
+                <input type="text" id="rootUser" placeholder="root" value="root" 
+                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+            </div>
+
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">
+                    Senha ROOT MySQL:
+                </label>
+                <input type="password" id="rootPass" placeholder="deixe em branco se não houver" 
+                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary disabled" disabled onclick="return false;">Passo 1 não executado</button>
+                <button class="btn-primary disabled" id="btn2" disabled onclick="return false;">Executar Passo 2</button>
+            </div>
+            <div id="status2" class="status"></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress2"></div>
+            </div>
+        </div>
+
+        <!-- Passo 3: Install DB -->
+        <div class="step" id="step3">
+            <h2>
+                <span class="step-number">3</span>
+                Instalar Banco de Dados
+            </h2>
+            <p>Cria as tabelas e estrutura do banco de dados.</p>
+            <div class="info-box">
+                ℹ️ Este passo executa todos os scripts SQL necessários para preparar o banco.
+            </div>
+            <div class="button-group">
+                <button class="btn-secondary disabled" disabled onclick="return false;">Passo 2 não executado</button>
+                <button class="btn-primary disabled" id="btn3" disabled onclick="return false;">Executar Passo 3</button>
+            </div>
+            <div id="status3" class="status"></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress3"></div>
+            </div>
+        </div>
+
+        <!-- Resumo Final -->
+        <div class="step" style="border-left-color: #4caf50; display: none;" id="stepFinal">
+            <h2 style="color: #4caf50;">
+                ✓ Setup Concluído!
+            </h2>
+            <p>Seu banco de dados está pronto para uso.</p>
+            <div id="credentialsDisplay" class="credentials-box" style="display: none;">
+                <strong>Suas Credenciais:</strong><br><br>
+                Usuário: <span id="displayUser"></span><br>
+                Senha: <span id="displayPass"></span>
+            </div>
+            <div class="info-box" style="margin-top: 15px;">
+                ✅ Você pode acessar a aplicação agora em:<br>
+                <strong>http://localhost/plataforma_x</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let step1Completed = false;
+        let step2Completed = false;
+        let credentials = {};
+
+        function enableButton(btnId, stepNum) {
+            document.getElementById(btnId).disabled = false;
+            document.getElementById(btnId).classList.remove('disabled');
+            document.getElementById(btnId).textContent = `Executar Passo ${stepNum}`;
+            document.getElementById(btnId).onclick = function() {
+                if (stepNum === 2) executeStep2();
+                else if (stepNum === 3) executeStep3();
+            };
+        }
+
+        function showStatus(statusId, type, message) {
+            const status = document.getElementById(statusId);
+            status.className = `status ${type}`;
+            status.textContent = message;
+            status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function updateProgress(progressId, percent) {
+            document.getElementById(progressId).style.width = percent + '%';
+        }
+
+        async function executeStep1() {
+            const statusId = 'status1';
+            const progressId = 'progress1';
+            
+            showStatus(statusId, 'info', '⏳ Gerando credenciais...');
+            updateProgress(progressId, 33);
+
+            try {
+                const response = await fetch('api/setup.php?action=setup');
+                const text = await response.text();
+
+                updateProgress(progressId, 66);
+                await new Promise(r => setTimeout(r, 500));
+
+                credentials = extractCredentials(text);
+                
+                updateProgress(progressId, 100);
+                showStatus(statusId, 'success', 
+                    `✓ Credenciais geradas!\n\nUsuário: ${credentials.user}\nSenha: ${credentials.password}`
+                );
+
+                step1Completed = true;
+                document.getElementById('step1').classList.add('completed');
+                enableButton('btn2', 2);
+
+            } catch (error) {
+                showStatus(statusId, 'error', '✗ Erro ao gerar credenciais: ' + error.message);
+                updateProgress(progressId, 0);
+            }
+        }
+
+        async function executeStep2() {
+            const statusId = 'status2';
+            const progressId = 'progress2';
+            const rootUser = document.getElementById('rootUser').value || 'root';
+            const rootPass = document.getElementById('rootPass').value || '';
+
+            showStatus(statusId, 'info', '⏳ Criando usuário no MySQL...');
+            updateProgress(progressId, 33);
+
+            try {
+                const formData = new FormData();
+                formData.append('action', 'create_user');
+                formData.append('root_user', rootUser);
+                formData.append('root_pass', rootPass);
+
+                const response = await fetch('api/create_user.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                updateProgress(progressId, 66);
+                await new Promise(r => setTimeout(r, 500));
+
+                const text = await response.text();
+
+                if (text.includes('SUCESSO') || text.includes('sucesso')) {
+                    updateProgress(progressId, 100);
+                    showStatus(statusId, 'success', '✓ Usuário criado com sucesso no MySQL!');
+                    step2Completed = true;
+                    document.getElementById('step2').classList.add('completed');
+                    enableButton('btn3', 3);
+                } else {
+                    throw new Error('Verifique as credenciais do ROOT MySQL');
+                }
+
+            } catch (error) {
+                showStatus(statusId, 'error', '✗ Erro ao criar usuário: ' + error.message);
+                updateProgress(progressId, 0);
+            }
+        }
+
+        async function executeStep3() {
+            const statusId = 'status3';
+            const progressId = 'progress3';
+
+            showStatus(statusId, 'info', '⏳ Instalando banco de dados...');
+            updateProgress(progressId, 33);
+
+            try {
+                const response = await fetch('install_database.php?action=install');
+                const text = await response.text();
+
+                updateProgress(progressId, 66);
+                await new Promise(r => setTimeout(r, 500));
+
+                if (text.includes('SUCESSO') || text.includes('sucesso')) {
+                    updateProgress(progressId, 100);
+                    showStatus(statusId, 'success', '✓ Banco de dados instalado com sucesso!');
+                    document.getElementById('step3').classList.add('completed');
+                    
+                    // Mostrar resumo final
+                    await new Promise(r => setTimeout(r, 1000));
+                    showFinalSummary();
+                } else {
+                    throw new Error('Verifique o arquivo database.sql');
+                }
+
+            } catch (error) {
+                showStatus(statusId, 'error', '✗ Erro ao instalar banco: ' + error.message);
+                updateProgress(progressId, 0);
+            }
+        }
+
+        function extractCredentials(html) {
+            // Tenta extrair do HTML ou usa valores padrão
+            const userMatch = html.match(/Usuário: ([^\n<]+)/);
+            const passMatch = html.match(/Senha: ([^\n<]+)/);
+            
+            return {
+                user: userMatch ? userMatch[1].trim() : 'plat_xxxxx',
+                password: passMatch ? passMatch[1].trim() : '**credenciais_geradas**'
+            };
+        }
+
+        function showFinalSummary() {
+            document.getElementById('stepFinal').style.display = 'block';
+            if (credentials.user && credentials.password) {
+                document.getElementById('credentialsDisplay').style.display = 'block';
+                document.getElementById('displayUser').textContent = credentials.user;
+                document.getElementById('displayPass').textContent = '●'.repeat(credentials.password.length);
+            }
+            document.getElementById('stepFinal').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

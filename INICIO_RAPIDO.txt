@@ -1,0 +1,179 @@
+⚡ GUIA RÁPIDO DE INSTALAÇÃO
+
+═════════════════════════════════════════════════════════════
+
+🖥️  PASSO 1: Copiar Arquivos
+───────────────────────────────────────────────────────────
+
+1. Copie a pasta "plataforma_x" para:
+   
+   📁 Windows (XAMPP):
+   C:\xampp\htdocs\plataforma_x
+   
+   📁 Windows (WAMP):
+   C:\wamp\www\plataforma_x
+   
+   📁 Mac (MAMP):
+   /Applications/MAMP/htdocs/plataforma_x
+   
+   📁 Linux:
+   /var/www/html/plataforma_x
+
+═════════════════════════════════════════════════════════════
+
+🗄️  PASSO 2: Criar Banco de Dados
+───────────────────────────────────────────────────────────
+
+OPÇÃO A - Via phpMyAdmin (RECOMENDADO)
+┌──────────────────────────────────────────────────────────┐
+│ 1. Abra: http://localhost/phpmyadmin                     │
+│ 2. Clique em "SQL" (barra superior)                      │
+│ 3. Copie todo o conteúdo de: database/database.sql      │
+│ 4. Cole no editor SQL                                    │
+│ 5. Clique em "Executar"                                 │
+│ 6. Pronto! ✓                                            │
+└──────────────────────────────────────────────────────────┘
+
+OPÇÃO B - Via Linha de Comando
+┌──────────────────────────────────────────────────────────┐
+│ 1. Abra o prompt/terminal                               │
+│ 2. Navegue até a pasta plataforma_x                     │
+│ 3. Digite:                                              │
+│    mysql -u root -p < database/database.sql            │
+│ 4. Insira sua senha MySQL                               │
+│ 5. Pronto! ✓                                            │
+└──────────────────────────────────────────────────────────┘
+
+OPÇÃO C - Windows + XAMPP
+┌──────────────────────────────────────────────────────────┐
+│ 1. Na pasta plataforma_x, execute:                       │
+│    install_database.bat                                 │
+│ 2. Digite suas credenciais MySQL                         │
+│ 3. Pronto! ✓                                            │
+└──────────────────────────────────────────────────────────┘
+
+═════════════════════════════════════════════════════════════
+
+⚙️  PASSO 3: Iniciar Servidor
+───────────────────────────────────────────────────────────
+
+Windows (XAMPP):
+┌──────────────────────────────────────────────────────────┐
+│ 1. Abra C:\xampp\xampp-control.exe                      │
+│ 2. Clique em "Start" (Apache)                           │
+│ 3. Clique em "Start" (MySQL)                            │
+│ 4. Aguarde a inicialização                              │
+└──────────────────────────────────────────────────────────┘
+
+Mac (MAMP):
+┌──────────────────────────────────────────────────────────┐
+│ 1. Abra /Applications/MAMP/MAMP.app                     │
+│ 2. Clique em "Start Servers"                            │
+│ 3. Aguarde a inicialização                              │
+└──────────────────────────────────────────────────────────┘
+
+═════════════════════════════════════════════════════════════
+
+🌐 PASSO 4: Acessar a Aplicação
+───────────────────────────────────────────────────────────
+
+Abra seu navegador e acesse:
+
+👉 http://localhost/plataforma_x/
+
+Pronto! A aplicação está rodando! 🎉
+
+═════════════════════════════════════════════════════════════
+
+🔧 TROUBLESHOOTING
+───────────────────────────────────────────────────────────
+
+❌ "Falha na conexão com o banco de dados"
+✓ Solução:
+  1. Verifique se MySQL está rodando
+  2. Confira credenciais em api/config.php
+  3. Verifique se o banco foi criado com sucesso
+
+❌ "Página em branco"
+✓ Solução:
+  1. Abra o console (F12)
+  2. Verifique se há erros
+  3. Confira se os arquivos CSS e JS estão acessíveis
+
+❌ "404 Not Found"
+✓ Solução:
+  1. Verifique se a pasta está no local correto
+  2. Confirme o nome da pasta: plataforma_x
+  3. Reinicie o servidor Apache
+
+❌ "Error: usuario_plataforma"
+✓ Solução:
+  1. O usuário MySQL pode não ter sido criado
+  2. Execute novamente o script database.sql
+  3. Ou atualize as credenciais em api/config.php
+
+═════════════════════════════════════════════════════════════
+
+📚 DOCUMENTAÇÃO COMPLETA
+───────────────────────────────────────────────────────────
+
+Para mais detalhes, consulte:
+
+📄 README.md                    - Guia geral do projeto
+📄 DOCUMENTACAO_TECNICA.md      - Detalhes técnicos
+📄 API_TESTING.md               - Como testar a API
+
+═════════════════════════════════════════════════════════════
+
+💡 DICAS IMPORTANTES
+───────────────────────────────────────────────────────────
+
+1️⃣  Credenciais Padrão do Banco:
+   - Usuário: usuario_plataforma
+   - Senha: senha_segura_123
+   
+   ⚠️  MUDE ESSAS SENHAS EM PRODUÇÃO!
+
+2️⃣  Dados de Teste:
+   - Para carregar dados de exemplo, use: dados_exemplo.sql
+   - Via phpMyAdmin ou comando: 
+     mysql -u root -p plataforma_x < database/dados_exemplo.sql
+
+3️⃣  CPF Válido para Teste:
+   - 123.456.789-00 (Fácil para testes)
+   - Verificador: Será validado no backend
+
+4️⃣  Email para Teste:
+   - teste@exemplo.com
+   - qualquer.email@dominio.com.br
+
+═════════════════════════════════════════════════════════════
+
+🎯 PRÓXIMOS PASSOS
+───────────────────────────────────────────────────────────
+
+1. Teste cadastrar um novo usuário
+2. Teste editar usuário
+3. Teste deletar usuário
+4. Verifique os dados no phpMyAdmin
+5. Teste a API com Postman (optional)
+
+═════════════════════════════════════════════════════════════
+
+📞 SUPORTE
+───────────────────────────────────────────────────────────
+
+Se encontrar problemas:
+
+1. Consulte DOCUMENTACAO_TECNICA.md
+2. Abra o console do navegador (F12)
+3. Verifique os logs do PHP/Apache
+4. Revise as credenciais do banco de dados
+
+═════════════════════════════════════════════════════════════
+
+✅ Instalação Concluída!
+
+Sua aplicação está pronta para uso. Divirta-se! 🚀
+
+═════════════════════════════════════════════════════════════
