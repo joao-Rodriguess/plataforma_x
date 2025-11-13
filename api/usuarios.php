@@ -5,6 +5,22 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
 header('Access-Control-Allow-Headers: Content-Type');
 
 require_once 'config.php';
+require_once 'config-advanced.php';
+
+// Verificar autenticação para operações sensíveis
+function verificarAutenticacaoAPI() {
+    session_start();
+
+    // Verificar se é uma requisição autenticada
+    if (!isset($_SESSION['user_id']) && !isset($_SESSION['is_admin'])) {
+        jsonResponse(false, null, 'Acesso não autorizado', 401);
+    }
+
+    // Rate limiting
+    if (!verificarRateLimit($_SERVER['REMOTE_ADDR'])) {
+        jsonResponse(false, null, 'Muitas requisições. Tente novamente mais tarde.', 429);
+    }
+}
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $acao = isset($_GET['acao']) ? $_GET['acao'] : '';
@@ -12,6 +28,13 @@ $acao = isset($_GET['acao']) ? $_GET['acao'] : '';
 // Tratamento de CORS preflight
 if ($metodo === 'OPTIONS') {
     http_response_code(200);
+    exit();
+}
+
+// Ensure JSON response for all errors
+function sendJsonError($message, $code = 500) {
+    http_response_code($code);
+    echo json_encode(['sucesso' => false, 'erro' => $message]);
     exit();
 }
 
@@ -29,14 +52,17 @@ try {
             break;
 
         case 'POST':
+            verificarAutenticacaoAPI();
             criarUsuario();
             break;
 
         case 'PUT':
+            verificarAutenticacaoAPI();
             atualizarUsuario();
             break;
 
         case 'DELETE':
+            verificarAutenticacaoAPI();
             if (isset($_GET['id'])) {
                 deletarUsuario($_GET['id']);
             } else {
@@ -56,8 +82,8 @@ try {
 
 function listarUsuarios() {
     global $conexao;
-    
-    $sql = "SELECT id, nome_completo, cpf, email, telefone, data_criacao, ativo FROM usuarios ORDER BY data_criacao DESC";
+
+    $sql = "SELECT id, nome_completo, cpf, email, telefone, senha_usuario, data_criacao, ativo FROM usuarios ORDER BY data_criacao DESC";
     $resultado = $conexao->query($sql);
 
     if ($resultado) {
@@ -98,9 +124,8 @@ function criarUsuario() {
     
     $dados = json_decode(file_get_contents("php://input"), true);
 
-    // Validar campos obrigatórios
-    if (!isset($dados['nome_completo']) || !isset($dados['cpf']) || !isset($dados['email']) || 
-        !isset($dados['nome_usuario_banco']) || !isset($dados['senha_banco']) || !isset($dados['senha_usuario'])) {
+    // Validar campos obrigatórios (DB credentials are generated server-side)
+    if (!isset($dados['nome_completo']) || !isset($dados['cpf']) || !isset($dados['email']) || !isset($dados['senha_usuario'])) {
         http_response_code(400);
         echo json_encode(['erro' => 'Campos obrigatórios faltando']);
         return;
@@ -111,8 +136,16 @@ function criarUsuario() {
     $cpf = $conexao->real_escape_string($dados['cpf']);
     $email = $conexao->real_escape_string($dados['email']);
     $telefone = isset($dados['telefone']) ? $conexao->real_escape_string($dados['telefone']) : '';
-    $nome_usuario_banco = $conexao->real_escape_string($dados['nome_usuario_banco']);
-    $senha_banco = $dados['senha_banco'];
+    // Gerar credenciais do banco automaticamente
+    $nome_usuario_banco = 'u_' . substr(bin2hex(random_bytes(4)), 0, 8);
+    // Gera senha segura
+    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+';
+    $senha_banco = '';
+    for ($i = 0; $i < 16; $i++) {
+        $senha_banco .= $chars[random_int(0, strlen($chars) - 1)];
+    }
+    $nome_usuario_banco = $conexao->real_escape_string($nome_usuario_banco);
+    $senha_banco_escaped = $conexao->real_escape_string($senha_banco);
     $senha_usuario = password_hash($dados['senha_usuario'], PASSWORD_BCRYPT);
 
     // Validar CPF simples
@@ -140,12 +173,13 @@ function criarUsuario() {
         return;
     }
 
-    $stmt->bind_param("sssssss", $nome_completo, $cpf, $email, $telefone, $nome_usuario_banco, $senha_banco, $senha_usuario);
+    $stmt->bind_param("sssssss", $nome_completo, $cpf, $email, $telefone, $nome_usuario_banco, $senha_banco_escaped, $senha_usuario);
 
     if ($stmt->execute()) {
         $novo_id = $conexao->insert_id;
         http_response_code(201);
-        echo json_encode(['sucesso' => true, 'mensagem' => 'Usuário criado com sucesso', 'id' => $novo_id]);
+        // Não retornar senha do banco ao cliente padrão; only admin can view. Return masked info.
+        echo json_encode(['sucesso' => true, 'mensagem' => 'Usuário criado com sucesso', 'id' => $novo_id, 'db_user' => $nome_usuario_banco, 'db_password_masked' => str_repeat('*', 8)]);
     } else {
         http_response_code(400);
         echo json_encode(['erro' => 'Erro ao criar usuário: ' . $stmt->error]);

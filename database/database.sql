@@ -12,15 +12,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nome_usuario_banco VARCHAR(50) NOT NULL UNIQUE,
     senha_banco VARCHAR(255) NOT NULL,
     senha_usuario VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'user',
     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ativo BOOLEAN DEFAULT TRUE
 );
 
--- Criar usuário do banco com privilégios específicos
-CREATE USER IF NOT EXISTS 'usuario_plataforma'@'localhost' IDENTIFIED BY 'senha_segura_123';
 
--- Conceder privilégios ao usuário
-GRANT SELECT, INSERT, UPDATE, DELETE ON plataforma_x.* TO 'usuario_plataforma'@'localhost';
-
--- Aplicar as mudanças
-FLUSH PRIVILEGES;
