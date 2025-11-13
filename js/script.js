@@ -1,5 +1,5 @@
 // Configuração da API
-const API_URL = 'http://localhost/plataforma_x/api/usuarios.php';
+const API_URL = 'api/usuarios.php';
 
 // Elementos do DOM
 const formCriar = document.getElementById('formCriar');
@@ -74,8 +74,6 @@ async function criarUsuario(e) {
         cpf: document.getElementById('cpf').value,
         email: document.getElementById('email').value,
         telefone: document.getElementById('telefone').value,
-        nome_usuario_banco: document.getElementById('nome_usuario_banco').value,
-        senha_banco: document.getElementById('senha_banco').value,
         senha_usuario: document.getElementById('senha_usuario').value
     };
     
@@ -132,7 +130,7 @@ function preencherTabela(usuarios) {
     const tbody = document.getElementById('usuariosTableBody');
     
     if (usuarios.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999;">Nenhum usuário cadastrado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999;">Nenhum usuário cadastrado</td></tr>';
         return;
     }
     
@@ -144,10 +142,13 @@ function preencherTabela(usuarios) {
             hour: '2-digit',
             minute: '2-digit'
         });
-        
+
         const statusClass = usuario.ativo ? 'status-active' : 'status-inactive';
         const statusTexto = usuario.ativo ? 'Ativo' : 'Inativo';
-        
+
+        // Mostrar apenas os primeiros 8 caracteres do hash da senha
+        const senhaExibida = usuario.senha_usuario ? usuario.senha_usuario.substring(0, 8) + '...' : '-';
+
         return `
             <tr>
                 <td>${usuario.id}</td>
@@ -155,6 +156,7 @@ function preencherTabela(usuarios) {
                 <td>${formatarCPF(usuario.cpf)}</td>
                 <td>${usuario.email}</td>
                 <td>${usuario.telefone || '-'}</td>
+                <td>${senhaExibida}</td>
                 <td><span class="status-badge ${statusClass}">${statusTexto}</span></td>
                 <td>
                     <div class="actions">
@@ -172,15 +174,16 @@ async function abrirModalEditar(id) {
     try {
         const response = await fetch(`${API_URL}?acao=obter&id=${id}`);
         const resultado = await response.json();
-        
+
         if (resultado.sucesso) {
             const usuario = resultado.dados;
             document.getElementById('usuarioId').value = usuario.id;
             document.getElementById('nomeAtualizar').value = usuario.nome_completo;
             document.getElementById('emailAtualizar').value = usuario.email;
             document.getElementById('telefoneAtualizar').value = usuario.telefone || '';
-            
-            modalEditar.classList.add('show');
+            document.getElementById('senhaAtualizar').value = ''; // Sempre vazio para segurança
+
+            modalEditar.style.display = 'flex'; // Centralizar modal
         } else {
             mostrarAlerta(resultado.erro || 'Erro ao obter usuário', 'error');
         }
@@ -191,32 +194,44 @@ async function abrirModalEditar(id) {
 
 // Fechar modal
 function fecharModal() {
-    modalEditar.classList.remove('show');
+    modalEditar.style.display = 'none';
     formAtualizar.reset();
 }
 
 // Atualizar usuário
 async function atualizarUsuario(e) {
     e.preventDefault();
-    
+
     const id = document.getElementById('usuarioId').value;
+    const senha = document.getElementById('senhaAtualizar').value;
     const dados = {
         id: parseInt(id),
         nome_completo: document.getElementById('nomeAtualizar').value,
         email: document.getElementById('emailAtualizar').value,
         telefone: document.getElementById('telefoneAtualizar').value
     };
-    
+
+    // Adicionar senha apenas se foi preenchida
+    if (senha) {
+        dados.senha_usuario = senha;
+    }
+
     if (!dados.nome_completo || !dados.email) {
         mostrarAlerta('Preencha os campos obrigatórios', 'error');
         return;
     }
-    
+
     if (!validarEmail(dados.email)) {
         mostrarAlerta('Email inválido', 'error');
         return;
     }
-    
+
+    // Validar senha se foi preenchida
+    if (senha && senha.length < 6) {
+        mostrarAlerta('Nova senha deve ter pelo menos 6 caracteres', 'error');
+        return;
+    }
+
     try {
         const response = await fetch(API_URL, {
             method: 'PUT',
@@ -225,9 +240,9 @@ async function atualizarUsuario(e) {
             },
             body: JSON.stringify(dados)
         });
-        
+
         const resultado = await response.json();
-        
+
         if (response.ok) {
             mostrarAlerta('Usuário atualizado com sucesso!', 'success');
             fecharModal();
@@ -293,7 +308,7 @@ function validarFormulario(dados) {
         mostrarAlerta('CPF é obrigatório', 'error');
         return false;
     }
-    
+
     if (!validarCPF(dados.cpf)) {
         mostrarAlerta('CPF inválido', 'error');
         return false;
@@ -306,16 +321,6 @@ function validarFormulario(dados) {
     
     if (!validarEmail(dados.email)) {
         mostrarAlerta('Email inválido', 'error');
-        return false;
-    }
-    
-    if (!dados.nome_usuario_banco) {
-        mostrarAlerta('Nome de usuário do banco é obrigatório', 'error');
-        return false;
-    }
-    
-    if (!dados.senha_banco) {
-        mostrarAlerta('Senha do banco é obrigatória', 'error');
         return false;
     }
     
@@ -337,20 +342,21 @@ function validarEmail(email) {
     return regex.test(email);
 }
 
+// Função de validação de CPF
 function validarCPF(cpf) {
     // Remove caracteres especiais
     cpf = cpf.replace(/[^\d]/g, '');
-    
+
     // Verifica se tem 11 dígitos
     if (cpf.length !== 11) {
         return false;
     }
-    
+
     // Verifica se não é uma sequência repetida
-    if (/(\d)\1{10}/.test(cpf)) {
+    if (/^(\d)\1{10}$/.test(cpf)) {
         return false;
     }
-    
+
     // Calcula o primeiro dígito verificador
     let soma = 0;
     for (let i = 0; i < 9; i++) {
@@ -358,7 +364,7 @@ function validarCPF(cpf) {
     }
     let resto = soma % 11;
     let digito1 = (resto < 2) ? 0 : 11 - resto;
-    
+
     // Calcula o segundo dígito verificador
     soma = 0;
     for (let i = 0; i < 10; i++) {
@@ -366,7 +372,7 @@ function validarCPF(cpf) {
     }
     resto = soma % 11;
     let digito2 = (resto < 2) ? 0 : 11 - resto;
-    
+
     // Verifica se os dígitos correspondem
     return (digito1 === parseInt(cpf[9]) && digito2 === parseInt(cpf[10]));
 }
