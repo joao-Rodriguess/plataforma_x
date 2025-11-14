@@ -7,8 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $_POST['user'] ?? '';
     $pass = $_POST['pass'] ?? '';
     
-    // Authenticate against usuarios table where role='admin'
-    $sql = "SELECT id, email, nome_completo FROM usuarios WHERE email = ? AND role = 'admin' LIMIT 1";
+    // Authenticate against usuarios table (both admin and regular users)
+    $sql = "SELECT id, email, nome_completo, senha_usuario, role FROM usuarios WHERE email = ? LIMIT 1";
     $stmt = $conexao->prepare($sql);
     if (!$stmt) {
         $err = 'Erro ao preparar consulta';
@@ -16,29 +16,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param('s', $user);
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         if ($result && $result->num_rows === 1) {
             $row = $result->fetch_assoc();
-            // Fetch full user record to get senha_usuario
-            $sql2 = "SELECT senha_usuario FROM usuarios WHERE id = ?";
-            $stmt2 = $conexao->prepare($sql2);
-            $stmt2->bind_param('i', $row['id']);
-            $stmt2->execute();
-            $res2 = $stmt2->get_result();
-            $user_row = $res2->fetch_assoc();
-            
-            if (password_verify($pass, $user_row['senha_usuario'])) {
+
+            if (password_verify($pass, $row['senha_usuario'])) {
                 session_regenerate_id(true);
-                $_SESSION['is_admin'] = true;
                 $_SESSION['user_id'] = $row['id'];
                 $_SESSION['user_name'] = $row['nome_completo'];
-                $_SESSION['user_role'] = 'admin';
-                header('Location: dashboard.php');
+                $_SESSION['user_email'] = $row['email'];
+                $_SESSION['user_role'] = $row['role'];
+
+                if ($row['role'] === 'admin') {
+                    $_SESSION['is_admin'] = true;
+                    header('Location: pagina_adm.php');
+                } else {
+                    header('Location: ../user/dashboard.php');
+                }
                 exit;
             } else {
                 $err = 'Credenciais inválidas';
             }
-            $stmt2->close();
         } else {
             $err = 'Credenciais inválidas';
         }

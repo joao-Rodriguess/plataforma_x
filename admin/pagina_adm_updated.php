@@ -84,14 +84,13 @@ if ($result) {
         <div class="card">
             <div class="admin-actions" style="margin-bottom: 20px;">
                 <a href="cadastrar_usuario.php" class="btn btn-add">➕ Cadastrar Usuário</a>
-                <a href="gerenciar_senhas.php" class="btn btn-add" style="margin-left: 10px;">🔐 Gerenciar Senhas</a>
                 <form method="post" action="actions.php" style="display:inline">
                     <button type="submit" name="action" value="logout" class="btn btn-logout">🚪 Logout</button>
                 </form>
             </div>
 
             <h2 style="margin-bottom: 20px; color: #333;">👥 Usuários Cadastrados</h2>
-            <p style="color: #666; margin-bottom: 20px;">Aqui você pode visualizar todas as credenciais de banco de dados dos usuários. Use "✅ Aplicar" para criar o usuário MySQL, "🔗 Testar" para verificar se funciona, "👤 Toggle Role" para alternar admin/usuário e "🗑️ Excluir" para remover usuários.</p>
+            <p style="color: #666; margin-bottom: 20px;">Aqui você pode visualizar todas as credenciais de banco de dados dos usuários. Use "✅ Aplicar" para criar o usuário MySQL, "🔗 Testar" para verificar se funciona, "👤 Toggle Role" para alternar admin/usuário, "🔐 Ver Senha" para visualizar a senha descriptografada e "🗑️ Excluir" para remover usuários.</p>
 
             <div class="table-container">
                 <table>
@@ -106,7 +105,7 @@ if ($result) {
                             <th>🔑 DB Senha</th>
                             <th>📅 Data</th>
                             <th>👤 Role</th>
-                            <th>🗄️ DB Credenciais</th>
+                            <th>🔐 Senha</th>
                             <th>⚙️ Ações</th>
                         </tr>
                     </thead>
@@ -127,7 +126,7 @@ if ($result) {
                                 </span>
                             </td>
                             <td>
-                                <button type="button" class="btn btn-info" onclick="openCredentialsModal(<?php echo $u['id']; ?>, '<?php echo htmlspecialchars($u['nome_completo']); ?>')">📄 Ver Credenciais</button>
+                                <button type="button" class="btn btn-info" onclick="openPasswordModal(<?php echo $u['id']; ?>, '<?php echo htmlspecialchars($u['nome_completo']); ?>')">🔐 Ver Senha</button>
                             </td>
                             <td>
                                 <div class="actions">
@@ -195,18 +194,18 @@ if ($result) {
         </div>
     </div>
 
-    <!-- Modal para Visualizar Credenciais de Banco -->
-    <div id="credentialsModal" class="modal">
+    <!-- Modal para Visualizar Senha -->
+    <div id="passwordModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>🗄️ Credenciais de Banco de Dados</h2>
-                <button class="modal-close" onclick="closeCredentialsModal()">&times;</button>
+                <h2>🔐 Senha do Usuário</h2>
+                <button class="modal-close" onclick="closePasswordModal()">&times;</button>
             </div>
-            <div id="credentialsContent" style="margin-bottom: 20px;">
-                <p style="color: #666;">Carregando credenciais...</p>
+            <div id="passwordContent" style="margin-bottom: 20px;">
+                <p style="color: #666;">Carregando senha...</p>
             </div>
             <div class="btn-group">
-                <button type="button" class="btn btn-secondary" onclick="closeCredentialsModal()">❌ Fechar</button>
+                <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">❌ Fechar</button>
             </div>
         </div>
     </div>
@@ -278,61 +277,57 @@ if ($result) {
             document.getElementById('privilegesModal').style.display = 'none';
         }
 
-        function openCredentialsModal(userId, userName) {
-            document.getElementById('credentialsContent').innerHTML = '<p style="color: #666;">Carregando credenciais...</p>';
-            document.getElementById('credentialsModal').style.display = 'block';
+        function openPasswordModal(userId, userName) {
+            document.getElementById('passwordContent').innerHTML = '<p style="color: #666;">Carregando senha...</p>';
+            document.getElementById('passwordModal').style.display = 'block';
 
-            // Fazer requisição AJAX para buscar credenciais
+            // Fazer requisição AJAX para buscar a senha
             fetch('actions.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: 'action=get_credentials&id=' + userId
+                body: 'action=get_password&id=' + userId
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    document.getElementById('credentialsContent').innerHTML = `
+                    document.getElementById('passwordContent').innerHTML = `
                         <p><strong>Usuário:</strong> ${userName}</p>
-                        <p><strong>Usuário do Banco:</strong></p>
-                        <div style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
-                            <code style="font-family: monospace; font-size: 1.1em; color: #495057;">${data.db_user}</code>
-                        </div>
-                        <p><strong>Senha do Banco:</strong></p>
+                        <p><strong>Senha:</strong></p>
                         <div style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6;">
-                            <code style="font-family: monospace; font-size: 1.1em; color: #495057;">${data.db_password}</code>
+                            <code style="font-family: monospace; font-size: 1.1em; color: #495057;">${data.password}</code>
                         </div>
                         <p style="color: #6c757d; font-size: 0.9em; margin-top: 10px;">
-                            ⚠️ Estas são as credenciais reais de acesso ao banco de dados MySQL.
+                            ⚠️ Esta senha está criptografada no banco de dados. Esta é a versão descriptografada apenas para visualização.
                         </p>
                     `;
                 } else {
-                    document.getElementById('credentialsContent').innerHTML = `
-                        <p style="color: #dc3545;">❌ Erro ao carregar credenciais: ${data.error}</p>
+                    document.getElementById('passwordContent').innerHTML = `
+                        <p style="color: #dc3545;">❌ Erro ao carregar senha: ${data.error}</p>
                     `;
                 }
             })
             .catch(error => {
-                document.getElementById('credentialsContent').innerHTML = `
+                document.getElementById('passwordContent').innerHTML = `
                     <p style="color: #dc3545;">❌ Erro de comunicação: ${error.message}</p>
                 `;
             });
         }
 
-        function closeCredentialsModal() {
-            document.getElementById('credentialsModal').style.display = 'none';
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
         }
 
         // Fechar modal ao clicar fora
         window.onclick = function(event) {
             const privilegesModal = document.getElementById('privilegesModal');
-            const credentialsModal = document.getElementById('credentialsModal');
+            const passwordModal = document.getElementById('passwordModal');
             if (event.target === privilegesModal) {
                 privilegesModal.style.display = 'none';
             }
-            if (event.target === credentialsModal) {
-                credentialsModal.style.display = 'none';
+            if (event.target === passwordModal) {
+                passwordModal.style.display = 'none';
             }
         }
     </script>

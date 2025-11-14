@@ -7,7 +7,7 @@ if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
 }
 
 // Buscar todos os usuários
-$sql = "SELECT id, nome_completo, cpf, email, telefone, nome_usuario_banco, senha_banco, data_criacao, ativo, role FROM usuarios ORDER BY data_criacao DESC";
+$sql = "SELECT id, nome_completo, cpf, email, telefone, senha_usuario, nome_usuario_banco, senha_banco, data_criacao, ativo, role FROM usuarios ORDER BY data_criacao DESC";
 $result = $conexao->query($sql);
 $usuarios = [];
 if ($result) {
@@ -84,7 +84,6 @@ if ($result) {
         <div class="card">
             <div class="admin-actions" style="margin-bottom: 20px;">
                 <a href="cadastrar_usuario.php" class="btn btn-add">➕ Cadastrar Usuário</a>
-                <a href="gerenciar_senhas.php" class="btn btn-add" style="margin-left: 10px;">🔐 Gerenciar Senhas</a>
                 <form method="post" action="actions.php" style="display:inline">
                     <button type="submit" name="action" value="logout" class="btn btn-logout">🚪 Logout</button>
                 </form>
@@ -102,11 +101,11 @@ if ($result) {
                             <th>🆔 CPF</th>
                             <th>📧 Email</th>
                             <th>📞 Telefone</th>
+                            <th>🔑 Senha Login</th>
                             <th>🗄️ DB Usuario</th>
                             <th>🔑 DB Senha</th>
                             <th>📅 Data</th>
                             <th>👤 Role</th>
-                            <th>🗄️ DB Credenciais</th>
                             <th>⚙️ Ações</th>
                         </tr>
                     </thead>
@@ -118,6 +117,7 @@ if ($result) {
                             <td><?php echo htmlspecialchars($u['cpf'] ?? '-'); ?></td>
                             <td><?php echo htmlspecialchars($u['email'] ?? ''); ?></td>
                             <td><?php echo htmlspecialchars($u['telefone'] ?? '-'); ?></td>
+                            <td><span style="font-family: monospace;"><?php echo htmlspecialchars($u['senha_usuario']); ?></span></td>
                             <td><code><?php echo htmlspecialchars($u['nome_usuario_banco'] ?? '-'); ?></code></td>
                             <td><span style="font-family: monospace;">••••••••</span></td>
                             <td><?php echo htmlspecialchars($u['data_criacao'] ?? ''); ?></td>
@@ -125,9 +125,6 @@ if ($result) {
                                 <span class="role-badge <?php echo ($u['role'] === 'admin') ? 'role-admin' : 'role-user'; ?>">
                                     <?php echo ($u['role'] === 'admin') ? '👑 Admin' : '👤 Usuário'; ?>
                                 </span>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-info" onclick="openCredentialsModal(<?php echo $u['id']; ?>, '<?php echo htmlspecialchars($u['nome_completo']); ?>')">📄 Ver Credenciais</button>
                             </td>
                             <td>
                                 <div class="actions">
@@ -195,22 +192,6 @@ if ($result) {
         </div>
     </div>
 
-    <!-- Modal para Visualizar Credenciais de Banco -->
-    <div id="credentialsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🗄️ Credenciais de Banco de Dados</h2>
-                <button class="modal-close" onclick="closeCredentialsModal()">&times;</button>
-            </div>
-            <div id="credentialsContent" style="margin-bottom: 20px;">
-                <p style="color: #666;">Carregando credenciais...</p>
-            </div>
-            <div class="btn-group">
-                <button type="button" class="btn btn-secondary" onclick="closeCredentialsModal()">❌ Fechar</button>
-            </div>
-        </div>
-    </div>
-
     <style>
         .role-badge {
             padding: 4px 8px;
@@ -252,19 +233,6 @@ if ($result) {
         .btn-warning:hover {
             background-color: #e67e22;
         }
-        .btn-info {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-            margin: 2px;
-        }
-        .btn-info:hover {
-            background-color: #2980b9;
-        }
     </style>
 
     <script>
@@ -278,61 +246,11 @@ if ($result) {
             document.getElementById('privilegesModal').style.display = 'none';
         }
 
-        function openCredentialsModal(userId, userName) {
-            document.getElementById('credentialsContent').innerHTML = '<p style="color: #666;">Carregando credenciais...</p>';
-            document.getElementById('credentialsModal').style.display = 'block';
-
-            // Fazer requisição AJAX para buscar credenciais
-            fetch('actions.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'action=get_credentials&id=' + userId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('credentialsContent').innerHTML = `
-                        <p><strong>Usuário:</strong> ${userName}</p>
-                        <p><strong>Usuário do Banco:</strong></p>
-                        <div style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6; margin-bottom: 10px;">
-                            <code style="font-family: monospace; font-size: 1.1em; color: #495057;">${data.db_user}</code>
-                        </div>
-                        <p><strong>Senha do Banco:</strong></p>
-                        <div style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6;">
-                            <code style="font-family: monospace; font-size: 1.1em; color: #495057;">${data.db_password}</code>
-                        </div>
-                        <p style="color: #6c757d; font-size: 0.9em; margin-top: 10px;">
-                            ⚠️ Estas são as credenciais reais de acesso ao banco de dados MySQL.
-                        </p>
-                    `;
-                } else {
-                    document.getElementById('credentialsContent').innerHTML = `
-                        <p style="color: #dc3545;">❌ Erro ao carregar credenciais: ${data.error}</p>
-                    `;
-                }
-            })
-            .catch(error => {
-                document.getElementById('credentialsContent').innerHTML = `
-                    <p style="color: #dc3545;">❌ Erro de comunicação: ${error.message}</p>
-                `;
-            });
-        }
-
-        function closeCredentialsModal() {
-            document.getElementById('credentialsModal').style.display = 'none';
-        }
-
         // Fechar modal ao clicar fora
         window.onclick = function(event) {
-            const privilegesModal = document.getElementById('privilegesModal');
-            const credentialsModal = document.getElementById('credentialsModal');
-            if (event.target === privilegesModal) {
-                privilegesModal.style.display = 'none';
-            }
-            if (event.target === credentialsModal) {
-                credentialsModal.style.display = 'none';
+            const modal = document.getElementById('privilegesModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
             }
         }
     </script>

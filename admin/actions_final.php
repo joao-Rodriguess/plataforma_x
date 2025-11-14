@@ -55,36 +55,6 @@ if ($action === 'apply_db_user') {
     }
     $mysqli->query('FLUSH PRIVILEGES');
 
-    // Salvar credenciais no arquivo database_credentials.txt
-    $credentials_file = __DIR__ . '/../database_credentials.txt';
-    $data_criacao = date('Y-m-d H:i:s');
-    $line = "$id|$dbUser|$dbPass|$data_criacao\n";
-
-    // Verificar se já existe uma linha para este usuário
-    $lines = file_exists($credentials_file) ? file($credentials_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
-    $new_lines = [];
-    $found = false;
-
-    foreach ($lines as $existing_line) {
-        if (strpos($existing_line, '#') === 0) {
-            $new_lines[] = $existing_line; // Manter comentários
-            continue;
-        }
-        $parts = explode('|', $existing_line);
-        if (count($parts) >= 1 && $parts[0] == $id) {
-            $new_lines[] = $line; // Substituir linha existente
-            $found = true;
-        } else {
-            $new_lines[] = $existing_line; // Manter outras linhas
-        }
-    }
-
-    if (!$found) {
-        $new_lines[] = $line; // Adicionar nova linha se não encontrou
-    }
-
-    file_put_contents($credentials_file, implode("\n", $new_lines) . "\n");
-
     header('Location: pagina_adm.php');
     exit;
 }
@@ -153,7 +123,7 @@ if ($action === 'test_connection') {
         }
 
         $testConn->close();
-        header('Location: pagina_adm.php?success=test_connection_success');
+        header('Location: ../api/usuarios.php?success=test_connection_success');
     } catch (Exception $e) {
         header('Location: pagina_adm.php?error=test_connection_failed&message=' . urlencode($e->getMessage()));
     }
@@ -276,24 +246,6 @@ if ($action === 'delete_user') {
         file_put_contents($senhas_file, implode("\n", $new_lines) . "\n");
     }
 
-    // Remover credenciais do arquivo database_credentials.txt se existir
-    $credentials_file = __DIR__ . '/../database_credentials.txt';
-    if (file_exists($credentials_file)) {
-        $lines = file($credentials_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $new_lines = [];
-        foreach ($lines as $line) {
-            if (strpos($line, '#') === 0) {
-                $new_lines[] = $line; // Manter comentários
-                continue;
-            }
-            $parts = explode('|', $line);
-            if (count($parts) >= 1 && $parts[0] != $user_id) {
-                $new_lines[] = $line; // Manter outras credenciais
-            }
-        }
-        file_put_contents($credentials_file, implode("\n", $new_lines) . "\n");
-    }
-
     // Deletar usuário da tabela usuarios
     $stmt = $conexao->prepare("DELETE FROM usuarios WHERE id = ?");
     $stmt->bind_param('i', $user_id);
@@ -376,38 +328,6 @@ if ($action === 'get_password') {
     // Como as senhas são hashed com bcrypt, elas não podem ser descriptografadas
     // Retornamos o hash para visualização
     echo json_encode(['success' => true, 'password' => $hashed_password, 'note' => 'Esta senha está criptografada com bcrypt e não pode ser descriptografada.']);
-    exit;
-}
-
-if ($action === 'get_credentials') {
-    $user_id = intval($_POST['id'] ?? 0);
-    if ($user_id <= 0) {
-        echo json_encode(['success' => false, 'error' => 'ID inválido']);
-        exit;
-    }
-
-    // Buscar credenciais do usuário
-    $stmt = $conexao->prepare("SELECT nome_usuario_banco, senha_banco FROM usuarios WHERE id = ?");
-    $stmt->bind_param('i', $user_id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($res->num_rows === 0) {
-        $stmt->close();
-        echo json_encode(['success' => false, 'error' => 'Usuário não encontrado']);
-        exit;
-    }
-    $row = $res->fetch_assoc();
-    $db_user = $row['nome_usuario_banco'];
-    $db_password = $row['senha_banco'];
-    $stmt->close();
-
-    // Verificar se as credenciais estão definidas
-    if (empty($db_user) || empty($db_password)) {
-        echo json_encode(['success' => false, 'error' => 'Credenciais de banco não foram definidas para este usuário']);
-        exit;
-    }
-
-    echo json_encode(['success' => true, 'db_user' => $db_user, 'db_password' => $db_password]);
     exit;
 }
 

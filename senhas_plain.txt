@@ -1,0 +1,5 @@
+# Arquivo de senhas em texto plano - ATENÇÃO: NÃO USE EM PRODUÇÃO!
+# Este arquivo contém senhas sem criptografia para fins de desenvolvimento
+# Formato: ID|Nome|Email|Senha_Plana|Data
+
+66|nahyron|nahyron@gmail.com|123456|2025-11-14 17:01:36

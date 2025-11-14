@@ -84,7 +84,7 @@ if ($result) {
         <div class="card">
             <div class="admin-actions" style="margin-bottom: 20px;">
                 <a href="cadastrar_usuario.php" class="btn btn-add">➕ Cadastrar Usuário</a>
-                <a href="gerenciar_senhas.php" class="btn btn-add" style="margin-left: 10px;">🔐 Gerenciar Senhas</a>
+                <a href="gerenciar_senhas.php" class="btn btn-warning" style="margin-left: 10px;">🔐 Gerenciar Senhas</a>
                 <form method="post" action="actions.php" style="display:inline">
                     <button type="submit" name="action" value="logout" class="btn btn-logout">🚪 Logout</button>
                 </form>
